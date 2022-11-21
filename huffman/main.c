@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
+#include "../clap/clap/clap.h"
 
 typedef struct Node
 {
@@ -259,15 +256,60 @@ const char* huffman_decode(Node* root, const char* encoded)
 
 int main(int argc, char** argv)
 {
-	const char* text = "This is a test string. Please work!!!";
+	const char* text = NULL;
+	uint8_t display_encoding = 0;
+	uint8_t display_decoding = 0;
+	
+	clapRegisterFlag("help", 'h', CLAP_FLAG_OPT_ARG, NULL);
+	clapRegisterFlag("encode", 'e', CLAP_FLAG_NO_ARG, NULL);
+	clapRegisterFlag("decode", 'd', CLAP_FLAG_NO_ARG, NULL);
+
+	while (clapParse(argc, argv))
+	{
+		if (clapParsedFlag("help", 'h'))
+		{
+			const char* arg = clapGetArg();
+
+			if (arg == NULL)
+				printf("[Huffman]: The following flags are supported:\n[Huffman]: --encode (-e)\n[Huffman]: --decode (-d)\n");
+			else
+			{
+				if (strcmp(arg, "encode") == 0 || strcmp(arg, "e") == 0)
+					printf("[Huffman]: --encode (-e): Enables to display the encoded string.\n");
+
+				if (strcmp(arg, "decode") == 0 || strcmp(arg, "d") == 0)
+					printf("[Huffman]: --decode (-d): Enables to display the decoded string.\n");
+			}
+		}
+
+		if (clapParsedFlag("encode", 'e'))
+			display_encoding = 1;
+
+		if (clapParsedFlag("decode", 'd'))
+			display_decoding = 1;
+
+		const char* non_opt = NULL;
+		if (clapParsedNonOpt(&non_opt) && non_opt != argv[0])
+			text = non_opt;
+	}
+
+	if (text == NULL)
+	{
+		printf("[Huffman]: Missing string input for the algorithm!\n");
+		return 1;
+	}
 
 	Node* root = huffman_tree_from_text(text);
 
 	const char* encoded = huffman_encode(root, text);
-	printf("Encoded: \"%s\"\n", encoded);
+	if (display_encoding)
+		printf("Encoded: \"%s\"\n", encoded);
 
-	const char* decoded = huffman_decode(root, encoded);
-	printf("Decoded: \"%s\"\n", decoded);
+	if (display_decoding)
+	{
+		const char* decoded = huffman_decode(root, encoded);
+		printf("Decoded: \"%s\"\n", decoded);
+	}
 
 	huffman_print(root, 0);
 
